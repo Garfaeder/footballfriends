@@ -6,7 +6,7 @@
     <title>Friends Football Hub - ระบบจัดการฟุตบอลกับเพื่อนๆ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
@@ -15,9 +15,7 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        brand: { gold: '#fbbf24', dark: '#0f172a', card: '#1e293b', accent: '#22c55e', danger: '#ef4444' }
-                    },
+                    colors: { brand: { gold: '#fbbf24', dark: '#0f172a', card: '#1e293b', accent: '#22c55e', danger: '#ef4444' } },
                     fontFamily: { sans: ['Kanit', 'sans-serif'] }
                 }
             }
@@ -26,33 +24,29 @@
 
     <style>
         body {
-            font-family: 'Kanit', sans-serif;
-            background-color: #0b0f19;
-            color: #f8fafc;
-            background-image:
-                radial-gradient(circle at 10% 20%, rgba(34, 197, 94, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+            font-family: 'Anuphan', sans-serif;
+            background:
+                radial-gradient(circle at 15% 10%, rgba(255,255,255,.035), transparent 28%),
+                radial-gradient(circle at 90% 90%, rgba(255,255,255,.025), transparent 28%),
+                #080808;
+            color: #f5f5f5;
             min-height: 100vh;
+            letter-spacing: .01em;
         }
-        .fut-card {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border: 2px solid rgba(148, 163, 184, 0.25);
-            position: relative;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-        }
-        .fut-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -5px rgba(251, 191, 36, 0.15); }
-        .fut-card.gold-card { background: linear-gradient(135deg, #2a200a 0%, #171203 100%); border: 2px solid #eab308; }
-        .fut-card.silver-card { border: 2px solid #cbd5e1; }
-        .fut-card.bronze-card { border: 2px solid #b45309; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        .stat-bar-track { background: rgba(148,163,184,0.15); border-radius: 999px; height: 5px; overflow:hidden; }
-        .stat-bar-fill { height:100%; border-radius:999px; }
-        .pickitem.selected { border-color: #fbbf24 !important; background: rgba(251,191,36,0.08) !important; }
-        input[type=range] { accent-color: #fbbf24; }
+
+        /* ---------- ball logo gentle spin ---------- */
+        .ball-logo { animation: spin-slow 9s linear infinite; }
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* ---------- tab fade-in ---------- */
+        @keyframes fadeInUp { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform:none; } }
+        .tab-content:not(.hidden) { animation: fadeInUp .35s ease; }
+
+        /* ---------- toast ---------- */
         .toast-box {
             position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
             background: #fbbf24; color: #0f172a; font-weight: 700; font-size: .85rem;
@@ -60,6 +54,210 @@
             z-index: 100; opacity: 0; pointer-events: none; transition: all .25s ease;
         }
         .toast-box.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ---------- SOFT FOOTBALL PLAYER CARD ---------- */
+        .shield-card {
+            position: relative;
+            min-height: 390px;
+            border-radius: 26px;
+            padding: 20px 16px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+            background: linear-gradient(145deg, rgba(34,34,34,.96), rgba(14,14,14,.96));
+            border: 1px solid rgba(255,255,255,.09);
+            box-shadow: 0 18px 40px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.035);
+            transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+            isolation: isolate;
+        }
+        .shield-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255,255,255,.16);
+            box-shadow: 0 22px 48px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.045);
+        }
+        .shield-card::before {
+            content:"";
+            position:absolute;
+            inset:0;
+            z-index:0;
+            pointer-events:none;
+            background: linear-gradient(135deg, rgba(255,255,255,.045), transparent 35%, transparent 65%, rgba(255,255,255,.018));
+        }
+        .tier-gold, .tier-silver, .tier-bronze {
+            color: #f5f5f5;
+            background: linear-gradient(145deg, #242424 0%, #151515 52%, #0d0d0d 100%);
+        }
+        .tier-gold { border-color: rgba(229,229,229,.22); }
+        .tier-silver { border-color: rgba(156,163,175,.20); }
+        .tier-bronze { border-color: rgba(107,114,128,.20); }
+
+        .shield-card .topline {
+            position:relative; z-index:2; width:100%;
+            display:flex; justify-content:space-between; align-items:flex-start;
+            padding: 0 4px;
+        }
+        .shield-card .ovr-num {
+            font-weight:800; font-size:2.25rem; line-height:1;
+            color:#f3f4f6;
+            text-shadow: 0 2px 14px rgba(255,255,255,.08);
+        }
+        .shield-card .pos-tag {
+            font-weight:700; font-size:.72rem; letter-spacing:1px;
+            color:#a3a3a3;
+        }
+        .shield-card .flagimg {
+            width:24px; height:16px; object-fit:cover; border-radius:4px;
+            margin-top:5px; opacity:.92; box-shadow:0 0 0 1px rgba(255,255,255,.08);
+        }
+        .shield-card .number-badge {
+            font-weight:700; font-size:.8rem;
+            background: rgba(255,255,255,.07);
+            border:1px solid rgba(255,255,255,.07);
+            color:#d4d4d4;
+            border-radius:999px;
+            padding: 4px 9px;
+            margin-top:1px;
+        }
+        .shield-card .photo-wrap {
+            position:relative; z-index:2;
+            height:112px; width:100%;
+            display:flex; align-items:flex-end; justify-content:center;
+            margin-top:4px;
+        }
+        .shield-card .photo-wrap img {
+            max-height:112px; max-width:92%; object-fit:contain;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,.38));
+        }
+        .shield-card .pname {
+            position:relative; z-index:2;
+            font-weight:800; font-size:1.08rem; text-align:center;
+            margin-top:7px; color:#fafafa;
+            letter-spacing:.2px;
+            max-width:100%;
+            overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        }
+        .shield-card .divider {
+            position:relative; z-index:2; width:78%; height:1px;
+            background: rgba(255,255,255,.09); margin: 8px 0 10px;
+        }
+        .shield-card .meta-line {
+            position:relative; z-index:2; font-size:.7rem;
+            color:#a3a3a3; margin-bottom:4px;
+        }
+        .shield-card .statgrid {
+            position:relative; z-index:2;
+            display:grid; grid-template-columns:1fr 1px 1fr;
+            column-gap:12px; width:94%;
+            padding:10px 10px;
+            border:1px solid rgba(255,255,255,.075);
+            background:rgba(255,255,255,.035);
+            border-radius:16px;
+            font-size:.82rem; font-weight:700;
+        }
+        .shield-card .statgrid .col {
+            display:flex; flex-direction:column; gap:6px;
+        }
+        .shield-card .statgrid .row {
+            display:flex; align-items:baseline; justify-content:flex-start; gap:7px;
+        }
+        .shield-card .statgrid .row .n {
+            width:24px; text-align:right; color:#f5f5f5;
+        }
+        .shield-card .statgrid .row .l {
+            font-size:.62rem; letter-spacing:.3px; color:#9ca3af;
+            font-weight:700;
+        }
+        .shield-card .statgrid .sep {
+            background: rgba(255,255,255,.08);
+        }
+        .shield-card .admin-actions {
+            position:relative; z-index:2; display:flex; gap:8px;
+            width:94%; margin-top:10px;
+        }
+        .shield-card .admin-actions button {
+            flex:1; font-size:.72rem; font-weight:700;
+            padding:6px 0; border-radius:10px;
+            border:1px solid rgba(255,255,255,.08);
+            cursor:pointer;
+            color:#d4d4d4;
+            background:rgba(255,255,255,.05);
+        }
+        .shield-card .admin-actions .btn-edit:hover {
+            background:rgba(255,255,255,.09);
+            border-color:rgba(255,255,255,.14);
+        }
+        .shield-card .admin-actions .btn-del:hover {
+            background:rgba(239,68,68,.14);
+            border-color:rgba(239,68,68,.24);
+        }
+
+        /* ---------- LIGHTWEIGHT GLASS ---------- */
+        .glass-panel {
+            background: rgba(20,20,20,.78);
+            border:1px solid rgba(255,255,255,.08);
+            box-shadow:0 12px 32px rgba(0,0,0,.24);
+            backdrop-filter: blur(7px);
+            -webkit-backdrop-filter: blur(7px);
+        }
+        .glass-panel-soft {
+            background: rgba(28,28,28,.62);
+            border:1px solid rgba(255,255,255,.065);
+            box-shadow:0 8px 24px rgba(0,0,0,.20);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
+
+        /* ---------- pickitem ---------- */
+        .pickitem.selected { border-color: #fbbf24 !important; background: rgba(251,191,36,0.08) !important; }
+        input[type=range] { accent-color: #fbbf24; }
+
+        /* ---------- pulse glow when teams generated ---------- */
+        @keyframes pulseGlow { 0%{ box-shadow:0 0 0 0 rgba(251,191,36,.5);} 70%{ box-shadow:0 0 0 14px rgba(251,191,36,0);} 100%{ box-shadow:0 0 0 0 rgba(251,191,36,0);} }
+        .pulse-once { animation: pulseGlow .9s ease; }
+
+        /* ---------- BLACK / GREY THEME ---------- */
+        .text-amber-400, .text-amber-300, .text-emerald-400, .text-emerald-500,
+        .text-green-400, .text-green-500, .text-blue-400, .text-blue-500 {
+            color:#d4d4d4 !important;
+        }
+        .bg-amber-500, .bg-emerald-500, .bg-green-500, .bg-blue-500 {
+            background:#2b2b2b !important;
+        }
+        .bg-slate-800, .bg-slate-900, .bg-slate-950 {
+            background-color:#141414 !important;
+        }
+        .bg-slate-800\/50, .bg-slate-900\/80, .bg-slate-800\/80 {
+            background-color:rgba(255,255,255,.045) !important;
+        }
+        .border-amber-500, .border-amber-600, .border-emerald-500, .border-emerald-600,
+        .border-slate-700, .border-slate-800 {
+            border-color:rgba(255,255,255,.09) !important;
+        }
+        .hover\:bg-amber-600:hover, .hover\:bg-emerald-600:hover, .hover\:bg-green-600:hover,
+        .hover\:bg-slate-700:hover {
+            background:#333 !important;
+        }
+        .border-b-2.border-emerald-500 { border-color:#d4d4d4 !important; }
+        .bg-gradient-to-r, .bg-gradient-to-tr {
+            background-image:none !important;
+            background-color:#2b2b2b !important;
+        }
+        .shadow-green-500\/20, .shadow-amber-500\/10, .shadow-lg {
+            box-shadow:0 10px 28px rgba(0,0,0,.24) !important;
+        }
+        .tab-btn { transition:all .2s ease; }
+        input, select, button, textarea {
+            font-family:'Anuphan', sans-serif;
+        }
+
     </style>
 </head>
 <body class="pb-16">
@@ -69,7 +267,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-green-400 flex items-center justify-center text-slate-950 font-extrabold text-xl shadow-lg shadow-green-500/20">
-                    <i class="fa-solid fa-futbol"></i>
+                    <i class="fa-solid fa-futbol ball-logo"></i>
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-200 to-amber-300">
@@ -79,10 +277,15 @@
                 </div>
             </div>
 
-            <button id="admin-toggle-btn" onclick="toggleAdminModal()" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-medium flex items-center gap-2 transition">
-                <i id="admin-icon" class="fa-solid fa-lock text-amber-400"></i>
-                <span id="admin-status-text" class="text-slate-300">เข้าสู่ระบบ Admin</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <button id="change-pass-btn" onclick="openChangePassModal()" class="hidden px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-medium items-center gap-2 transition">
+                    <i class="fa-solid fa-key text-amber-400"></i> เปลี่ยนรหัสผ่าน
+                </button>
+                <button id="admin-toggle-btn" onclick="toggleAdminModal()" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-medium flex items-center gap-2 transition">
+                    <i id="admin-icon" class="fa-solid fa-lock text-amber-400"></i>
+                    <span id="admin-status-text" class="text-slate-300">เข้าสู่ระบบ Admin</span>
+                </button>
+            </div>
         </div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -119,7 +322,7 @@
                 </div>
             </div>
 
-            <div id="players-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+            <div id="players-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"></div>
             <div id="players-empty" class="hidden text-center py-16 text-slate-500">
                 <div class="text-4xl mb-3">⚽</div>ยังไม่มีนักเตะในระบบ — เข้าสู่โหมด Admin เพื่อเริ่มเพิ่มนักเตะ
             </div>
@@ -129,7 +332,7 @@
         <section id="tab-matchmaker" class="tab-content hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                <div class="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                <div class="lg:col-span-1 glass-panel rounded-2xl p-5 shadow-xl">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
                             <i class="fa-solid fa-check-double text-emerald-400"></i> เลือกคนที่จะเล่นวันนี้
@@ -156,7 +359,7 @@
 
                 <div class="lg:col-span-2 space-y-6">
                     <div id="teams-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+                        <div id="teamA-col" class="glass-panel rounded-2xl p-5 shadow-xl relative overflow-hidden">
                             <div class="absolute top-0 left-0 right-0 h-1.5" id="teamA-color-bar" style="background-color: #ef4444;"></div>
                             <div class="flex justify-between items-center mb-4 pt-1">
                                 <div class="flex items-center gap-2">
@@ -173,7 +376,7 @@
                             </div>
                         </div>
 
-                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+                        <div id="teamB-col" class="glass-panel rounded-2xl p-5 shadow-xl relative overflow-hidden">
                             <div class="absolute top-0 left-0 right-0 h-1.5" id="teamB-color-bar" style="background-color: #3b82f6;"></div>
                             <div class="flex justify-between items-center mb-4 pt-1">
                                 <div class="flex items-center gap-2">
@@ -191,14 +394,14 @@
                         </div>
                     </div>
 
-                    <div id="bench-section" class="hidden bg-slate-900/80 border border-amber-500/30 rounded-2xl p-4">
+                    <div id="bench-section" class="hidden glass-panel-soft rounded-2xl p-4">
                         <h4 class="text-sm font-bold text-amber-400 flex items-center gap-2 mb-2">
                             <i class="fa-solid fa-couch"></i> ผู้เล่นสำรอง / ตัวสลับทีม (เนื่องจากจำนวนคนเป็นเลขคี่)
                         </h4>
                         <div id="bench-players-list" class="flex flex-wrap gap-2"></div>
                     </div>
 
-                    <div id="record-match-card" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <div id="record-match-card" class="hidden glass-panel rounded-2xl p-5 shadow-xl">
                         <h3 class="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
                             <i class="fa-solid fa-pen-to-square text-green-400"></i> บันทึกผลการแข่งขันแมทช์นี้
                         </h3>
@@ -231,19 +434,19 @@
         <section id="tab-history" class="tab-content hidden">
             <div class="space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
+                    <div class="glass-panel rounded-2xl p-4 flex items-center gap-4">
                         <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl font-bold border border-amber-500/20">
                             <i class="fa-solid fa-gamepad"></i>
                         </div>
                         <div><span class="text-xs text-slate-400 block">แมทช์ทั้งหมดที่บันทึก</span><span id="stat-total-matches" class="text-2xl font-extrabold text-slate-100">0</span></div>
                     </div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
+                    <div class="glass-panel rounded-2xl p-4 flex items-center gap-4">
                         <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-2xl font-bold border border-emerald-500/20">
                             <i class="fa-solid fa-crown"></i>
                         </div>
                         <div><span class="text-xs text-slate-400 block">นักเตะพลังสูงที่สุด</span><span id="stat-top-ovr" class="text-lg font-bold text-amber-400">-</span></div>
                     </div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4">
+                    <div class="glass-panel rounded-2xl p-4 flex items-center gap-4">
                         <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-2xl font-bold border border-blue-500/20">
                             <i class="fa-solid fa-users"></i>
                         </div>
@@ -251,7 +454,7 @@
                     </div>
                 </div>
 
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                <div class="glass-panel rounded-2xl p-5 shadow-xl">
                     <h3 class="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
                         <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> ประวัติการแข่งขัน
                     </h3>
@@ -262,9 +465,9 @@
     </main>
 
     <!-- MODAL: ADMIN -->
-    <div id="admin-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
-            <button onclick="toggleAdminModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200">
+    <div id="admin-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4" onclick="handleAdminBackdrop(event)">
+        <div class="glass-panel w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="closeAdminModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition flex items-center justify-center">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
             <div class="text-center mb-6">
@@ -281,10 +484,34 @@
         </div>
     </div>
 
+    <!-- MODAL: CHANGE PASSWORD -->
+    <div id="change-pass-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="glass-panel w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="closeChangePassModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition flex items-center justify-center">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-2xl mx-auto flex items-center justify-center text-2xl mb-2">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <h3 class="text-xl font-extrabold text-slate-100">เปลี่ยนรหัสผ่าน Admin</h3>
+            </div>
+            <label class="text-xs text-slate-400 block mb-1">รหัสผ่านปัจจุบัน</label>
+            <input type="password" id="cp-old" class="w-full bg-slate-800 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 mb-3 focus:outline-none focus:border-amber-400">
+            <label class="text-xs text-slate-400 block mb-1">รหัสผ่านใหม่</label>
+            <input type="password" id="cp-new1" class="w-full bg-slate-800 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 mb-3 focus:outline-none focus:border-amber-400">
+            <label class="text-xs text-slate-400 block mb-1">ยืนยันรหัสผ่านใหม่</label>
+            <input type="password" id="cp-new2" class="w-full bg-slate-800 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 mb-4 focus:outline-none focus:border-amber-400">
+            <button onclick="submitChangePassword()" class="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-check"></i> เปลี่ยนรหัสผ่าน
+            </button>
+        </div>
+    </div>
+
     <!-- MODAL: PLAYER ADD/EDIT -->
-    <div id="player-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative my-8">
-            <button onclick="closePlayerModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200">
+    <div id="player-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="glass-panel w-full max-w-lg rounded-3xl p-6 shadow-2xl relative my-8">
+            <button onclick="closePlayerModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition flex items-center justify-center">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
             <h3 id="player-modal-title" class="text-xl font-extrabold text-slate-100 mb-4 flex items-center gap-2">
@@ -294,13 +521,27 @@
             <div class="flex items-center gap-4 mb-4">
                 <img id="pm-photo-preview" class="w-20 h-20 rounded-full object-cover border-2 border-slate-700 bg-slate-800" src="">
                 <div class="flex-1">
-                    <label class="text-xs text-slate-400 block mb-1">รูปนักเตะ</label>
-                    <input type="file" id="pm-photo-file" accept="image/*" class="text-xs text-slate-300 w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-200 file:text-xs">
+                    <label class="text-xs text-slate-400 block mb-1">รูปนักเตะ (รองรับ PNG แบบพื้นหลังโปร่งใส และ JPG)</label>
+                    <input type="file" id="pm-photo-file" accept="image/png, image/jpeg, image/webp" class="text-xs text-slate-300 w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-200 file:text-xs">
                 </div>
             </div>
 
             <label class="text-xs text-slate-400 block mb-1 mt-2">ชื่อเล่น</label>
             <input type="text" id="pm-name" placeholder="เช่น ต้น" class="w-full bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+
+            <div class="grid grid-cols-2 gap-3 mt-3">
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">เบอร์เสื้อ</label>
+                    <input type="number" id="pm-number" placeholder="10" class="w-full bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">ตำแหน่ง (ถ้ามี)</label>
+                    <input type="text" id="pm-position" placeholder="เช่น LW, ST, GK" class="w-full bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <label class="text-xs text-slate-400 block mb-1 mt-3">ประเทศ (ถ้ามี)</label>
+            <select id="pm-country" class="w-full bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"></select>
 
             <div class="grid grid-cols-2 gap-3 mt-3">
                 <div>
@@ -328,8 +569,7 @@
 
 <script>
 /* =========================================================
-   FIREBASE CONFIG — แก้ตรงนี้ด้วยค่าจากโปรเจกต์ของคุณเอง
-   ดูวิธีหาไฟล์ config ได้ในไฟล์ firebase-setup-th.md ที่แนบมาด้วย
+   FIREBASE CONFIG
 ========================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyBrCLJ1MKz5nCym7cIPDKh2C6huLIuCQz8",
@@ -352,11 +592,27 @@ let pmPhotoData = '';
 let pmStatsState = {passing:60, shooting:60, pace:60, defending:60, physical:60};
 
 const STAT_DEFS = [
-  {key:'passing',   label:'Passing (ส่งบอล)',   color:'#3b82f6'},
-  {key:'shooting',  label:'Shooting (ยิงประตู)', color:'#ef4444'},
-  {key:'pace',      label:'Pace (ความเร็ว)',     color:'#22c55e'},
-  {key:'defending', label:'Defending (ป้องกัน)',  color:'#a855f7'},
-  {key:'physical',  label:'Physical (ร่างกาย)',  color:'#f97316'},
+  {key:'pace',      label:'PAC (ความเร็ว)',   short:'PAC', color:'#22c55e'},
+  {key:'shooting',  label:'SHO (ยิงประตู)',   short:'SHO', color:'#ef4444'},
+  {key:'passing',   label:'PAS (ส่งบอล)',    short:'PAS', color:'#3b82f6'},
+  {key:'defending', label:'DEF (ป้องกัน)',    short:'DEF', color:'#a855f7'},
+  {key:'physical',  label:'PHY (ร่างกาย)',   short:'PHY', color:'#f97316'},
+];
+const LEFT_STATS = ['pace','shooting','passing'];
+const RIGHT_STATS = ['defending','physical'];
+
+const COUNTRIES = [
+  {code:'', name:'ไม่ระบุ'},
+  {code:'th', name:'ไทย'}, {code:'br', name:'บราซิล'}, {code:'ar', name:'อาร์เจนตินา'},
+  {code:'gb-eng', name:'อังกฤษ'}, {code:'es', name:'สเปน'}, {code:'fr', name:'ฝรั่งเศส'},
+  {code:'de', name:'เยอรมนี'}, {code:'it', name:'อิตาลี'}, {code:'pt', name:'โปรตุเกส'},
+  {code:'nl', name:'เนเธอร์แลนด์'}, {code:'be', name:'เบลเยียม'}, {code:'hr', name:'โครเอเชีย'},
+  {code:'jp', name:'ญี่ปุ่น'}, {code:'kr', name:'เกาหลีใต้'}, {code:'cn', name:'จีน'},
+  {code:'us', name:'สหรัฐอเมริกา'}, {code:'mx', name:'เม็กซิโก'}, {code:'ma', name:'โมร็อกโก'},
+  {code:'ng', name:'ไนจีเรีย'}, {code:'gh', name:'กานา'}, {code:'sn', name:'เซเนกัล'},
+  {code:'vn', name:'เวียดนาม'}, {code:'mm', name:'เมียนมา'}, {code:'la', name:'ลาว'},
+  {code:'kh', name:'กัมพูชา'}, {code:'ph', name:'ฟิลิปปินส์'}, {code:'my', name:'มาเลเซีย'},
+  {code:'id', name:'อินโดนีเซีย'}, {code:'sg', name:'สิงคโปร์'}, {code:'au', name:'ออสเตรเลีย'},
 ];
 
 function overallOf(p){
@@ -365,19 +621,15 @@ function overallOf(p){
   return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
 }
 function tierClass(ovr){
-  if(ovr>=85) return 'gold-card';
-  if(ovr>=70) return 'silver-card';
-  return 'bronze-card';
-}
-function tierLabel(ovr){
-  if(ovr>=85) return {name:'GOLD', color:'text-amber-400'};
-  if(ovr>=70) return {name:'SILVER', color:'text-slate-300'};
-  return {name:'BRONZE', color:'text-orange-600'};
+  if(ovr>=85) return 'tier-gold';
+  if(ovr>=70) return 'tier-silver';
+  return 'tier-bronze';
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function placeholderPhoto(){
-  return 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#1e293b"/><text x="50%" y="55%" font-size="30" text-anchor="middle" fill="#475569">⚽</text></svg>');
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><text x="50%" y="58%" font-size="60" text-anchor="middle">⚽</text></svg>');
 }
+function flagUrl(code){ return code ? `https://flagcdn.com/w40/${code}.png` : ''; }
 function toast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -398,6 +650,12 @@ function shuffle(arr){
   return arr;
 }
 
+/* ---------- populate country select ---------- */
+(function initCountrySelect(){
+  const sel = document.getElementById('pm-country');
+  sel.innerHTML = COUNTRIES.map(c=>`<option value="${c.code}">${c.name}</option>`).join('');
+})();
+
 /* ---------- Tabs ---------- */
 function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.add('hidden'));
@@ -413,7 +671,7 @@ function switchTab(name){
   if(name==='history') renderHistory();
 }
 
-/* ---------- Admin ---------- */
+/* ---------- Admin login ---------- */
 function toggleAdminModal(){
   const modal = document.getElementById('admin-modal');
   if(isAdmin){
@@ -422,6 +680,10 @@ function toggleAdminModal(){
     toast('ออกจากโหมด Admin แล้ว');
     return;
   }
+  openAdminLoginModal();
+}
+function openAdminLoginModal(){
+  const modal = document.getElementById('admin-modal');
   modal.classList.remove('hidden');
   document.getElementById('admin-pass-input').value = '';
   db.collection('config').doc('admin').get().then(doc=>{
@@ -432,8 +694,27 @@ function toggleAdminModal(){
       document.getElementById('admin-modal-title').textContent = 'ยืนยันสิทธิ์ Admin';
       document.getElementById('admin-modal-sub').textContent = 'กรอกรหัสผ่านเพื่อแก้ไขข้อมูล';
     }
+  }).catch(()=>{
+    toast('โหลดการตั้งค่า Admin ไม่สำเร็จ');
   });
 }
+function closeAdminModal(){
+  document.getElementById('admin-modal').classList.add('hidden');
+  document.getElementById('admin-pass-input').value = '';
+}
+function handleAdminBackdrop(e){
+  if(e.target === e.currentTarget) closeAdminModal();
+}
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    closeAdminModal();
+    closeChangePassModal();
+    closePlayerModal();
+  }
+});
+document.getElementById('admin-pass-input').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') confirmAdminLogin();
+});
 async function confirmAdminLogin(){
   const pass = document.getElementById('admin-pass-input').value.trim();
   if(!pass){ toast('กรอกรหัสผ่านก่อนนะ'); return; }
@@ -446,7 +727,7 @@ async function confirmAdminLogin(){
     toast('ตั้งรหัสผ่านเรียบร้อย เข้าสู่โหมด Admin แล้ว');
   } else if(doc.data().passwordHash === hash){
     isAdmin = true;
-    toast('เข้าสู่โหมด Admin แล้ว');
+    toast('เข้าสู่โหมด Admin แล้ว 🎉');
   } else {
     toast('รหัสผ่านไม่ถูกต้อง');
     return;
@@ -459,7 +740,38 @@ function updateAdminUI(){
   document.getElementById('admin-icon').className = isAdmin ? 'fa-solid fa-unlock text-emerald-400' : 'fa-solid fa-lock text-amber-400';
   document.getElementById('admin-toggle-btn').classList.toggle('border-emerald-600', isAdmin);
   document.getElementById('add-player-btn').classList.toggle('hidden', !isAdmin);
+  const cpBtn = document.getElementById('change-pass-btn');
+  cpBtn.classList.toggle('hidden', !isAdmin);
+  cpBtn.classList.toggle('flex', isAdmin);
   renderPlayers();
+}
+
+/* ---------- Change password ---------- */
+function openChangePassModal(){
+  document.getElementById('cp-old').value = '';
+  document.getElementById('cp-new1').value = '';
+  document.getElementById('cp-new2').value = '';
+  document.getElementById('change-pass-modal').classList.remove('hidden');
+}
+function closeChangePassModal(){ document.getElementById('change-pass-modal').classList.add('hidden'); }
+async function submitChangePassword(){
+  const oldPass = document.getElementById('cp-old').value.trim();
+  const new1 = document.getElementById('cp-new1').value.trim();
+  const new2 = document.getElementById('cp-new2').value.trim();
+  if(!oldPass || !new1 || !new2){ toast('กรอกให้ครบทุกช่อง'); return; }
+  if(new1 !== new2){ toast('รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน'); return; }
+  if(new1.length < 4){ toast('รหัสผ่านใหม่ควรมีอย่างน้อย 4 ตัวอักษร'); return; }
+  const ref = db.collection('config').doc('admin');
+  const doc = await ref.get();
+  const oldHash = await sha256(oldPass);
+  if(!doc.exists || doc.data().passwordHash !== oldHash){
+    toast('รหัสผ่านปัจจุบันไม่ถูกต้อง');
+    return;
+  }
+  const newHash = await sha256(new1);
+  await ref.set({passwordHash: newHash});
+  toast('เปลี่ยนรหัสผ่านเรียบร้อยแล้ว ✅');
+  closeChangePassModal();
 }
 
 /* ---------- Firestore sync ---------- */
@@ -479,32 +791,41 @@ function renderPlayers(){
   players.forEach(p=>{
     const ovr = overallOf(p);
     const tc = tierClass(ovr);
-    const tl = tierLabel(ovr);
+    const country = COUNTRIES.find(c=>c.code === p.country);
     const card = document.createElement('div');
-    card.className = 'fut-card ' + tc + ' rounded-2xl p-4 flex flex-col items-center';
+    card.className = 'shield-card ' + tc;
     card.innerHTML = `
-      <div class="w-full flex justify-between items-start">
-        <div class="text-left">
-          <div class="text-3xl font-extrabold ${tl.color}">${ovr}</div>
-          <div class="text-[10px] tracking-widest text-slate-400 -mt-1">OVR</div>
+      <div class="topline">
+        <div>
+          <div class="ovr-num">${ovr}</div>
+          ${p.position ? `<div class="pos-tag">${escapeHtml(p.position)}</div>` : ''}
+          ${country && country.code ? `<img class="flagimg" src="${flagUrl(country.code)}" title="${country.name}">` : ''}
         </div>
-        <div class="text-[10px] font-bold px-2 py-1 rounded-full border ${tl.color} border-current">${tl.name}</div>
+        ${p.number ? `<div class="number-badge">#${p.number}</div>` : '<div></div>'}
       </div>
-      <img src="${p.photo || placeholderPhoto()}" class="w-20 h-20 rounded-full object-cover border-2 border-slate-700 my-2">
-      <div class="font-bold text-slate-100 text-base">${escapeHtml(p.name||'-')}</div>
-      <div class="text-xs text-slate-400 mb-3">${p.height||'-'} ซม. · ${p.weight||'-'} กก.</div>
-      <div class="w-full space-y-1.5">
-        ${STAT_DEFS.map(d=>`
-          <div class="flex items-center gap-2 text-[10px]">
-            <span class="w-6 text-slate-400 font-semibold">${d.label.slice(0,3).toUpperCase()}</span>
-            <div class="flex-1 stat-bar-track"><div class="stat-bar-fill" style="width:${(p.stats&&p.stats[d.key])||0}%; background:${d.color}"></div></div>
-            <span class="w-5 text-right text-slate-300 font-semibold">${(p.stats&&p.stats[d.key])||0}</span>
-          </div>`).join('')}
+      <div class="photo-wrap"><img src="${p.photo || placeholderPhoto()}"></div>
+      <div class="pname">${escapeHtml(p.name||'-')}</div>
+      <div class="meta-line">${p.height||'-'} ซม. · ${p.weight||'-'} กก.</div>
+      <div class="divider"></div>
+      <div class="statgrid">
+        <div class="col">
+          ${LEFT_STATS.map(k=>{
+            const d = STAT_DEFS.find(x=>x.key===k);
+            return `<div class="row"><span class="n">${(p.stats&&p.stats[k])||0}</span><span class="l">${d.short}</span></div>`;
+          }).join('')}
+        </div>
+        <div class="sep"></div>
+        <div class="col">
+          ${RIGHT_STATS.map(k=>{
+            const d = STAT_DEFS.find(x=>x.key===k);
+            return `<div class="row"><span class="n">${(p.stats&&p.stats[k])||0}</span><span class="l">${d.short}</span></div>`;
+          }).join('')}
+        </div>
       </div>
       ${isAdmin ? `
-      <div class="flex gap-2 w-full mt-3">
-        <button data-edit="${p.id}" class="flex-1 py-1.5 text-xs font-semibold bg-blue-500/15 text-blue-300 rounded-lg hover:bg-blue-500/25"><i class="fa-solid fa-pen"></i> แก้ไข</button>
-        <button data-del="${p.id}" class="flex-1 py-1.5 text-xs font-semibold bg-red-500/15 text-red-300 rounded-lg hover:bg-red-500/25"><i class="fa-solid fa-trash"></i> ลบ</button>
+      <div class="admin-actions">
+        <button data-edit="${p.id}" class="btn-edit"><i class="fa-solid fa-pen"></i> แก้ไข</button>
+        <button data-del="${p.id}" class="btn-del"><i class="fa-solid fa-trash"></i> ลบ</button>
       </div>` : ''}
     `;
     grid.appendChild(card);
@@ -536,6 +857,9 @@ function openPlayerModal(id){
     ? '<i class="fa-solid fa-id-card text-emerald-400"></i> แก้ไขนักเตะ'
     : '<i class="fa-solid fa-id-card text-emerald-400"></i> เพิ่มนักเตะใหม่';
   document.getElementById('pm-name').value = p ? p.name : '';
+  document.getElementById('pm-number').value = p ? (p.number||'') : '';
+  document.getElementById('pm-position').value = p ? (p.position||'') : '';
+  document.getElementById('pm-country').value = p ? (p.country||'') : '';
   document.getElementById('pm-height').value = p ? (p.height||'') : '';
   document.getElementById('pm-weight').value = p ? (p.weight||'') : '';
   pmStatsState = (p && p.stats) ? {...p.stats} : {passing:60,shooting:60,pace:60,defending:60,physical:60};
@@ -554,14 +878,17 @@ document.getElementById('pm-photo-file').addEventListener('change', (e)=>{
   reader.onload = ev => {
     const img = new Image();
     img.onload = () => {
-      const maxDim = 300;
+      const maxDim = 320;
       let w = img.width, h = img.height;
       if(w > h && w > maxDim){ h = h*maxDim/w; w = maxDim; }
       else if(h > maxDim){ w = w*maxDim/h; h = maxDim; }
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      pmPhotoData = canvas.toDataURL('image/jpeg', 0.72);
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,w,h);
+      ctx.drawImage(img, 0, 0, w, h);
+      // PNG keeps transparency, important for cut-out player photos
+      pmPhotoData = canvas.toDataURL('image/png');
       document.getElementById('pm-photo-preview').src = pmPhotoData;
     };
     img.src = ev.target.result;
@@ -574,6 +901,9 @@ async function savePlayer(){
   if(!name){ toast('กรอกชื่อเล่นก่อนนะ'); return; }
   const data = {
     name,
+    number: Number(document.getElementById('pm-number').value)||null,
+    position: document.getElementById('pm-position').value.trim() || '',
+    country: document.getElementById('pm-country').value || '',
     height: Number(document.getElementById('pm-height').value)||null,
     weight: Number(document.getElementById('pm-weight').value)||null,
     stats: {...pmStatsState},
@@ -585,7 +915,7 @@ async function savePlayer(){
   } else {
     data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
     await db.collection('players').add(data);
-    toast('เพิ่มนักเตะแล้ว');
+    toast('เพิ่มนักเตะแล้ว ⚽');
   }
   closePlayerModal();
 }
@@ -602,9 +932,9 @@ function renderSelectionList(){
   players.forEach(p=>{
     const ovr = overallOf(p);
     const item = document.createElement('div');
-    item.className = 'pickitem flex items-center gap-2 px-2.5 py-2 rounded-lg border border-slate-700 bg-slate-800/50 cursor-pointer' + (selectedIds.has(p.id)?' selected':'');
+    item.className = 'pickitem flex items-center gap-2 px-2.5 py-2 rounded-lg border border-slate-700 bg-slate-800/50 cursor-pointer transition' + (selectedIds.has(p.id)?' selected':'');
     item.innerHTML = `
-      <img src="${p.photo||placeholderPhoto()}" class="w-8 h-8 rounded-full object-cover">
+      <img src="${p.photo||placeholderPhoto()}" class="w-8 h-8 rounded-full object-cover bg-slate-900">
       <span class="flex-1 text-sm font-medium text-slate-200">${escapeHtml(p.name)}</span>
       <span class="text-xs font-bold text-amber-400">${ovr}</span>
       <i class="fa-solid ${selectedIds.has(p.id)?'fa-square-check text-amber-400':'fa-square text-slate-600'}"></i>
@@ -654,7 +984,7 @@ function generateTeams(){
 
 function playerRow(p, color){
   return `<div class="flex items-center gap-2 bg-slate-800/60 rounded-lg px-2.5 py-1.5">
-    <img src="${p.photo||placeholderPhoto()}" class="w-7 h-7 rounded-full object-cover">
+    <img src="${p.photo||placeholderPhoto()}" class="w-7 h-7 rounded-full object-cover bg-slate-900">
     <span class="flex-1 text-sm text-slate-200">${escapeHtml(p.name)}</span>
     <span class="text-xs font-bold" style="color:${color}">${p.overall}</span>
   </div>`;
@@ -677,7 +1007,7 @@ function renderDraw(){
     benchSection.classList.remove('hidden');
     document.getElementById('bench-players-list').innerHTML = `
       <div class="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 text-sm">
-        <img src="${sub.photo||placeholderPhoto()}" class="w-7 h-7 rounded-full object-cover">
+        <img src="${sub.photo||placeholderPhoto()}" class="w-7 h-7 rounded-full object-cover bg-slate-900">
         ${escapeHtml(sub.name)} <span class="text-amber-400 font-bold">${sub.overall}</span>
         <span class="text-xs text-slate-400">(สำรองฝั่งทีม ${subSide})</span>
       </div>`;
@@ -691,6 +1021,15 @@ function renderDraw(){
   document.getElementById('score-teamB').value = 0;
   document.getElementById('match-date').valueAsDate = new Date();
   document.getElementById('record-match-card').classList.remove('hidden');
+
+  // small playful pulse to celebrate the draw, once, not looping
+  ['teamA-col','teamB-col'].forEach(id=>{
+    const el = document.getElementById(id);
+    el.classList.remove('pulse-once');
+    void el.offsetWidth; // restart animation
+    el.classList.add('pulse-once');
+  });
+  toast('จัดทีมเรียบร้อย ⚽🎉');
 }
 
 async function saveMatchResult(){
@@ -732,7 +1071,7 @@ function renderHistory(){
     snap.forEach(doc=>{
       const m = doc.data();
       const item = document.createElement('div');
-      item.className = 'bg-slate-800/50 border border-slate-700 rounded-xl p-4 cursor-pointer';
+      item.className = 'bg-slate-800/50 border border-slate-700 rounded-xl p-4 cursor-pointer transition hover:border-slate-600';
       item.innerHTML = `
         <div class="flex justify-between items-center">
           <div class="font-semibold text-slate-100"><i class="fa-solid fa-calendar-days text-slate-400 mr-1"></i> ${m.date}</div>
@@ -775,7 +1114,7 @@ function renderHistory(){
     });
   });
 }
-
+  
 updateAdminUI();
 </script>
 </body>
