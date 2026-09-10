@@ -329,7 +329,7 @@
         <section id="tab-matchmaker" class="tab-content hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                <div class="lg:col-span-1 glass-panel rounded-2xl p-5 shadow-xl">
+                <div id="matchmaker-select-panel" class="lg:col-span-1 glass-panel rounded-2xl p-5 shadow-xl">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
                             <i class="fa-solid fa-check-double text-emerald-400"></i> เลือกคนที่จะเล่นวันนี้
@@ -354,7 +354,10 @@
                     </div>
                 </div>
 
-                <div class="lg:col-span-2 space-y-6">
+                <div id="matchmaker-teams-panel" class="lg:col-span-2 space-y-6">
+                    <div id="viewer-notice" class="hidden glass-panel-soft rounded-xl px-4 py-2.5 text-xs text-slate-400 flex items-center gap-2">
+                        <i class="fa-solid fa-eye text-slate-500"></i> โหมดดูอย่างเดียว — เข้าสู่ระบบ Admin เพื่อจัดทีม
+                    </div>
                     <div id="teams-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div id="teamA-col" class="glass-panel rounded-2xl p-5 shadow-xl relative overflow-hidden">
                             <div class="absolute top-0 left-0 right-0 h-1.5" id="teamA-color-bar" style="background-color: #ef4444;"></div>
@@ -371,6 +374,7 @@
                             <div id="teamA-players-list" class="space-y-2 min-h-[220px]">
                                 <div class="text-center py-12 text-slate-500 text-sm">ยังไม่ได้จัดทีม</div>
                             </div>
+                            <div id="teamA-add-wrap" class="mt-3"></div>
                         </div>
 
                         <div id="teamB-col" class="glass-panel rounded-2xl p-5 shadow-xl relative overflow-hidden">
@@ -388,6 +392,7 @@
                             <div id="teamB-players-list" class="space-y-2 min-h-[220px]">
                                 <div class="text-center py-12 text-slate-500 text-sm">ยังไม่ได้จัดทีม</div>
                             </div>
+                            <div id="teamB-add-wrap" class="mt-3"></div>
                         </div>
                     </div>
 
@@ -415,11 +420,11 @@
                         </div>
                         <div class="flex gap-2">
                             <input type="date" id="match-date" class="flex-1 bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-                            <button onclick="generateTeams()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl font-medium text-sm flex items-center gap-2">
+                            <button id="regenerate-team-btn" onclick="generateTeams()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl font-medium text-sm flex items-center gap-2">
                                 <i class="fa-solid fa-rotate"></i> สุ่มใหม่
                             </button>
                         </div>
-                        <button onclick="saveMatchResult()" class="w-full mt-3 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                        <button id="save-result-btn" onclick="saveMatchResult()" class="w-full mt-3 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-floppy-disk"></i> บันทึกประวัติการแข่ง
                         </button>
                     </div>
@@ -578,6 +583,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const draftRef = db.collection('state').doc('draft');
 
 /* ---------- State ---------- */
 let players = [];
@@ -585,8 +591,10 @@ let isAdmin = false;
 let selectedIds = new Set();
 let lastDraw = null;
 let editingId = null;
+let editingMatchId = null;
 let pmPhotoData = '';
 let pmStatsState = {passing:60, shooting:60, pace:60, defending:60, physical:60};
+const DRAFT_STORAGE_KEY = 'football-hub-draft-v1';
 
 const STAT_DEFS = [
   {key:'pace',      label:'PAC (ความเร็ว)',   short:'PAC', color:'#22c55e'},
@@ -741,6 +749,31 @@ function updateAdminUI(){
   cpBtn.classList.toggle('hidden', !isAdmin);
   cpBtn.classList.toggle('flex', isAdmin);
   renderPlayers();
+  updateMatchmakerAdminUI();
+}
+
+/* ---------- Matchmaker admin/viewer UI ---------- */
+function updateMatchmakerAdminUI(){
+  const selectPanel = document.getElementById('matchmaker-select-panel');
+  const teamsPanel = document.getElementById('matchmaker-teams-panel');
+  const viewerNotice = document.getElementById('viewer-notice');
+  const regenBtn = document.getElementById('regenerate-team-btn');
+  if(selectPanel) selectPanel.classList.toggle('hidden', !isAdmin);
+  if(teamsPanel){
+    teamsPanel.classList.toggle('lg:col-span-2', isAdmin);
+    teamsPanel.classList.toggle('lg:col-span-3', !isAdmin);
+  }
+  if(viewerNotice) viewerNotice.classList.toggle('hidden', isAdmin);
+  if(regenBtn) regenBtn.classList.toggle('hidden', !isAdmin);
+  ['teamA-name','teamB-name'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.disabled = !isAdmin;
+  });
+  ['teamA-color','teamB-color'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.disabled = !isAdmin;
+  });
+  if(lastDraw) renderDraw();
 }
 
 /* ---------- Change password ---------- */
@@ -775,6 +808,7 @@ async function submitChangePassword(){
 db.collection('players').orderBy('createdAt','asc').onSnapshot(snap=>{
   players = snap.docs.map(d=>({id:d.id, ...d.data()}));
   renderPlayers();
+  restoreDraftLocal();
   renderSelectionList();
 });
 
@@ -958,12 +992,162 @@ function updateTeamColors(){
   if(lastDraw){
     document.getElementById('record-teamA-lbl').textContent = document.getElementById('teamA-name').value;
     document.getElementById('record-teamB-lbl').textContent = document.getElementById('teamB-name').value;
+    saveDraftState();
   }
 }
 document.getElementById('teamA-name').addEventListener('input', updateTeamColors);
 document.getElementById('teamB-name').addEventListener('input', updateTeamColors);
 
+/* ---------- Draft persistence helpers ---------- */
+function requireAdminForDraft(){
+  if(!isAdmin){ toast('ต้องเข้าสู่ระบบ Admin ก่อนถึงจะจัดทีมได้'); return false; }
+  return true;
+}
+function computeTotals(){
+  lastDraw.totalA = lastDraw.teamA.reduce((s,p)=>s+(p.overall||0),0);
+  lastDraw.totalB = lastDraw.teamB.reduce((s,p)=>s+(p.overall||0),0);
+}
+function draftUsedIds(){
+  const ids = new Set();
+  lastDraw.teamA.forEach(p=>ids.add(p.id));
+  lastDraw.teamB.forEach(p=>ids.add(p.id));
+  if(lastDraw.sub) ids.add(lastDraw.sub.id);
+  return ids;
+}
+function persistDraftLocal(){
+  if(!lastDraw) return;
+  computeTotals();
+  const payload = {
+    teamA: lastDraw.teamA,
+    teamB: lastDraw.teamB,
+    sub: lastDraw.sub,
+    subSide: lastDraw.subSide || null,
+    totalA: lastDraw.totalA,
+    totalB: lastDraw.totalB,
+    teamAName: document.getElementById('teamA-name').value,
+    teamBName: document.getElementById('teamB-name').value,
+    colorA: document.getElementById('teamA-color').value,
+    colorB: document.getElementById('teamB-color').value,
+    selectedIds: Array.from(selectedIds),
+    scoreA: Number(document.getElementById('score-teamA').value)||0,
+    scoreB: Number(document.getElementById('score-teamB').value)||0,
+    matchDate: document.getElementById('match-date').value || ''
+  };
+  localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+}
+
+async function saveDraftState(){
+  if(!lastDraw) return;
+  computeTotals();
+  const strip = p => ({id:p.id, name:p.name, photo:p.photo||'', overall:p.overall});
+  persistDraftLocal();
+  try{
+    await draftRef.set({
+      teamA: lastDraw.teamA.map(strip),
+      teamB: lastDraw.teamB.map(strip),
+      sub: lastDraw.sub ? strip(lastDraw.sub) : null,
+      subSide: lastDraw.subSide || null,
+      totalA: lastDraw.totalA, totalB: lastDraw.totalB,
+      teamAName: document.getElementById('teamA-name').value,
+      teamBName: document.getElementById('teamB-name').value,
+      colorA: document.getElementById('teamA-color').value,
+      colorB: document.getElementById('teamB-color').value,
+      selectedIds: Array.from(selectedIds),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){ /* ignore transient save errors, local state still correct */ }
+}
+
+function restoreDraftLocal(){
+  try{
+    const payload = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null');
+    if(!payload) return;
+    if(Array.isArray(payload.selectedIds)) selectedIds = new Set(payload.selectedIds);
+    document.getElementById('teamA-name').value = payload.teamAName || 'ทีม A (สีแดง)';
+    document.getElementById('teamB-name').value = payload.teamBName || 'ทีม B (สีน้ำเงิน)';
+    document.getElementById('teamA-color').value = payload.colorA || '#ef4444';
+    document.getElementById('teamB-color').value = payload.colorB || '#3b82f6';
+    document.getElementById('score-teamA').value = payload.scoreA ?? 0;
+    document.getElementById('score-teamB').value = payload.scoreB ?? 0;
+    document.getElementById('match-date').value = payload.matchDate || new Date().toISOString().slice(0,10);
+    const teamA = Array.isArray(payload.teamA) ? payload.teamA : [];
+    const teamB = Array.isArray(payload.teamB) ? payload.teamB : [];
+    lastDraw = {
+      teamA,
+      teamB,
+      sub: payload.sub || null,
+      subSide: payload.subSide || null,
+      totalA: Number(payload.totalA) || 0,
+      totalB: Number(payload.totalB) || 0
+    };
+    updateTeamColors();
+    renderDraw();
+    renderSelectionList();
+  }catch(e){
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  }
+}
+
+function movePlayerToTeam(playerId, fromTeam, toTeam){
+  if(!requireAdminForDraft() || !lastDraw) return;
+  let p = null;
+  if(fromTeam==='sub'){
+    if(lastDraw.sub && lastDraw.sub.id===playerId){ p = lastDraw.sub; lastDraw.sub = null; lastDraw.subSide = null; }
+  } else {
+    const list = fromTeam==='A' ? lastDraw.teamA : lastDraw.teamB;
+    const idx = list.findIndex(x=>x.id===playerId);
+    if(idx>-1) p = list.splice(idx,1)[0];
+  }
+  if(!p) return;
+  if(toTeam==='A') lastDraw.teamA.push(p);
+  else if(toTeam==='B') lastDraw.teamB.push(p);
+  else if(toTeam==='sub'){ lastDraw.sub = p; lastDraw.subSide = null; }
+  computeTotals();
+  renderDraw();
+  saveDraftState();
+  toast('ย้ายผู้เล่นแล้ว');
+}
+
+function removePlayerFromDraw(playerId, fromTeam){
+  if(!requireAdminForDraft() || !lastDraw) return;
+  if(!confirm('เอาผู้เล่นคนนี้ออกจากทีมที่จัดไว้?')) return;
+  if(fromTeam==='sub'){
+    if(lastDraw.sub && lastDraw.sub.id===playerId){ lastDraw.sub = null; lastDraw.subSide = null; }
+  } else {
+    const list = fromTeam==='A' ? lastDraw.teamA : lastDraw.teamB;
+    const idx = list.findIndex(x=>x.id===playerId);
+    if(idx>-1) list.splice(idx,1);
+  }
+  computeTotals();
+  renderDraw();
+  saveDraftState();
+  toast('เอาผู้เล่นออกจากทีมแล้ว');
+}
+
+function addPlayerToTeam(playerId, team){
+  if(!requireAdminForDraft() || !lastDraw) return;
+  const p = players.find(x=>x.id===playerId);
+  if(!p) return;
+  const entry = {id:p.id, name:p.name, photo:p.photo||'', overall:overallOf(p)};
+  if(team==='A') lastDraw.teamA.push(entry);
+  else if(team==='B') lastDraw.teamB.push(entry);
+  computeTotals();
+  renderDraw();
+  saveDraftState();
+  toast('เพิ่มผู้เล่นเข้าทีมแล้ว');
+}
+
+function setupRecordCard(){
+  document.getElementById('record-teamA-lbl').textContent = document.getElementById('teamA-name').value;
+  document.getElementById('record-teamB-lbl').textContent = document.getElementById('teamB-name').value;
+  document.getElementById('score-teamA').value = 0;
+  document.getElementById('score-teamB').value = 0;
+  document.getElementById('match-date').valueAsDate = new Date();
+  document.getElementById('record-match-card').classList.remove('hidden');
+}
+
 function generateTeams(){
+  if(!requireAdminForDraft()) return;
   const chosen = players.filter(p=>selectedIds.has(p.id)).map(p=>({...p, overall: overallOf(p)}));
   if(chosen.length < 2){ toast('เลือกผู้เล่นอย่างน้อย 2 คน'); return; }
   let arr = shuffle([...chosen]);
@@ -977,47 +1161,8 @@ function generateTeams(){
   let subSide = sub ? (Math.random()<0.5 ? 'A':'B') : null;
   lastDraw = {teamA, teamB, totalA, totalB, sub, subSide};
   renderDraw();
-}
-
-function playerRow(p, color){
-  return `<div class="flex items-center gap-2 bg-slate-800/60 rounded-lg px-2.5 py-1.5">
-    <img src="${p.photo||placeholderPhoto()}" class="w-7 h-7 rounded-full object-cover bg-slate-900">
-    <span class="flex-1 text-sm text-slate-200">${escapeHtml(p.name)}</span>
-    <span class="text-xs font-bold" style="color:${color}">${p.overall}</span>
-  </div>`;
-}
-
-function renderDraw(){
-  const {teamA, teamB, totalA, totalB, sub, subSide} = lastDraw;
-  const avgA = teamA.length ? Math.round(totalA/teamA.length) : 0;
-  const avgB = teamB.length ? Math.round(totalB/teamB.length) : 0;
-  document.getElementById('teamA-ovr').textContent = 'OVR ' + avgA;
-  document.getElementById('teamB-ovr').textContent = 'OVR ' + avgB;
-
-  const listA = document.getElementById('teamA-players-list');
-  const listB = document.getElementById('teamB-players-list');
-  listA.innerHTML = teamA.map(p=>playerRow(p,'#fbbf24')).join('') || '<div class="text-center py-12 text-slate-500 text-sm">ไม่มีผู้เล่น</div>';
-  listB.innerHTML = teamB.map(p=>playerRow(p,'#fbbf24')).join('') || '<div class="text-center py-12 text-slate-500 text-sm">ไม่มีผู้เล่น</div>';
-
-  const benchSection = document.getElementById('bench-section');
-  if(sub){
-    benchSection.classList.remove('hidden');
-    document.getElementById('bench-players-list').innerHTML = `
-      <div class="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 text-sm">
-        <img src="${sub.photo||placeholderPhoto()}" class="w-7 h-7 rounded-full object-cover bg-slate-900">
-        ${escapeHtml(sub.name)} <span class="text-amber-400 font-bold">${sub.overall}</span>
-        <span class="text-xs text-slate-400">(สำรองฝั่งทีม ${subSide})</span>
-      </div>`;
-  } else {
-    benchSection.classList.add('hidden');
-  }
-
-  document.getElementById('record-teamA-lbl').textContent = document.getElementById('teamA-name').value;
-  document.getElementById('record-teamB-lbl').textContent = document.getElementById('teamB-name').value;
-  document.getElementById('score-teamA').value = 0;
-  document.getElementById('score-teamB').value = 0;
-  document.getElementById('match-date').valueAsDate = new Date();
-  document.getElementById('record-match-card').classList.remove('hidden');
+  setupRecordCard();
+  saveDraftState();
 
   // small playful pulse to celebrate the draw, once, not looping
   ['teamA-col','teamB-col'].forEach(id=>{
@@ -1029,11 +1174,140 @@ function renderDraw(){
   toast('จัดทีมเรียบร้อย ⚽🎉');
 }
 
+function playerRow(p, color, team){
+  const otherTeam = team==='A' ? 'B' : 'A';
+  let controls = '';
+  if(isAdmin){
+    const subBtn = !lastDraw.sub ? `<button title="ย้ายไปสำรอง" data-move="${p.id}" data-from="${team}" data-to="sub" class="w-6 h-6 flex items-center justify-center rounded-md bg-slate-700/60 hover:bg-slate-600 text-slate-300 text-[11px]"><i class="fa-solid fa-couch"></i></button>` : '';
+    controls = `<div class="flex items-center gap-1 shrink-0">
+      <button title="ย้ายไปทีม ${otherTeam}" data-move="${p.id}" data-from="${team}" data-to="${otherTeam}" class="w-6 h-6 flex items-center justify-center rounded-md bg-slate-700/60 hover:bg-slate-600 text-slate-300 text-[11px]"><i class="fa-solid fa-right-left"></i></button>
+      ${subBtn}
+      <button title="ลบออกจากทีม" data-remove="${p.id}" data-from="${team}" class="w-6 h-6 flex items-center justify-center rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[11px]"><i class="fa-solid fa-xmark"></i></button>
+    </div>`;
+  }
+  return `<div class="flex items-center gap-2 bg-slate-800/60 rounded-lg px-2.5 py-1.5">
+    <img src="${p.photo||placeholderPhoto()}" class="w-7 h-7 rounded-full object-cover bg-slate-900 shrink-0">
+    <span class="flex-1 text-sm text-slate-200 truncate">${escapeHtml(p.name)}</span>
+    <span class="text-xs font-bold shrink-0" style="color:${color}">${p.overall}</span>
+    ${controls}
+  </div>`;
+}
+
+function benchRow(p){
+  if(!p) return '';
+  let controls = '';
+  if(isAdmin){
+    controls = `<div class="flex items-center gap-1 ml-auto">
+      <button title="ส่งเข้าทีม A" data-move="${p.id}" data-from="sub" data-to="A" class="px-2 py-1 rounded-md bg-slate-700/60 hover:bg-slate-600 text-slate-300 text-[11px] font-medium">→ ทีม A</button>
+      <button title="ส่งเข้าทีม B" data-move="${p.id}" data-from="sub" data-to="B" class="px-2 py-1 rounded-md bg-slate-700/60 hover:bg-slate-600 text-slate-300 text-[11px] font-medium">→ ทีม B</button>
+      <button title="ลบออก" data-remove="${p.id}" data-from="sub" class="w-6 h-6 flex items-center justify-center rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[11px]"><i class="fa-solid fa-xmark"></i></button>
+    </div>`;
+  }
+  return `<div class="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2 text-sm w-full">
+    <img src="${p.photo||placeholderPhoto()}" class="w-7 h-7 rounded-full object-cover bg-slate-900 shrink-0">
+    <span class="truncate">${escapeHtml(p.name)}</span> <span class="text-amber-400 font-bold shrink-0">${p.overall}</span>
+    ${controls}
+  </div>`;
+}
+
+function bindDrawRowEvents(){
+  document.querySelectorAll('#teamA-players-list [data-move], #teamB-players-list [data-move], #bench-players-list [data-move]').forEach(b=>{
+    b.addEventListener('click', ()=> movePlayerToTeam(b.dataset.move, b.dataset.from, b.dataset.to));
+  });
+  document.querySelectorAll('#teamA-players-list [data-remove], #teamB-players-list [data-remove], #bench-players-list [data-remove]').forEach(b=>{
+    b.addEventListener('click', ()=> removePlayerFromDraw(b.dataset.remove, b.dataset.from));
+  });
+}
+
+function renderTeamAddPicker(team){
+  const wrap = document.getElementById('team'+team+'-add-wrap');
+  if(!wrap) return;
+  if(!isAdmin || !lastDraw){ wrap.innerHTML = ''; return; }
+  const used = draftUsedIds();
+  const avail = players.filter(p=>!used.has(p.id));
+  if(avail.length===0){
+    wrap.innerHTML = `<div class="text-[11px] text-slate-500 text-center py-1">ไม่มีผู้เล่นเหลือให้เพิ่มแล้ว</div>`;
+    return;
+  }
+  wrap.innerHTML = `<select class="w-full text-xs bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-300 focus:outline-none focus:border-emerald-500">
+    <option value="">+ เพิ่มผู้เล่นเข้าทีม ${team}</option>
+    ${avail.map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (${overallOf(p)})</option>`).join('')}
+  </select>`;
+  wrap.querySelector('select').addEventListener('change', (e)=>{
+    const pid = e.target.value;
+    if(!pid) return;
+    addPlayerToTeam(pid, team);
+  });
+}
+
+function renderDraw(){
+  if(!lastDraw) return;
+  computeTotals();
+  const {teamA, teamB, sub} = lastDraw;
+  const avgA = teamA.length ? Math.round(lastDraw.totalA/teamA.length) : 0;
+  const avgB = teamB.length ? Math.round(lastDraw.totalB/teamB.length) : 0;
+  document.getElementById('teamA-ovr').textContent = 'OVR ' + avgA;
+  document.getElementById('teamB-ovr').textContent = 'OVR ' + avgB;
+
+  const listA = document.getElementById('teamA-players-list');
+  const listB = document.getElementById('teamB-players-list');
+  listA.innerHTML = teamA.map(p=>playerRow(p,'#fbbf24','A')).join('') || '<div class="text-center py-12 text-slate-500 text-sm">ไม่มีผู้เล่น</div>';
+  listB.innerHTML = teamB.map(p=>playerRow(p,'#fbbf24','B')).join('') || '<div class="text-center py-12 text-slate-500 text-sm">ไม่มีผู้เล่น</div>';
+  renderTeamAddPicker('A');
+  renderTeamAddPicker('B');
+
+  const benchSection = document.getElementById('bench-section');
+  if(sub){
+    benchSection.classList.remove('hidden');
+    document.getElementById('bench-players-list').innerHTML = benchRow(sub);
+  } else {
+    benchSection.classList.add('hidden');
+  }
+  bindDrawRowEvents();
+
+  document.getElementById('record-teamA-lbl').textContent = document.getElementById('teamA-name').value;
+  document.getElementById('record-teamB-lbl').textContent = document.getElementById('teamB-name').value;
+  document.getElementById('record-match-card').classList.remove('hidden');
+}
+
+function updateMatchSaveButtonLabel(){
+  const btn = document.getElementById('save-result-btn');
+  if(!btn) return;
+  btn.innerHTML = editingMatchId
+    ? '<i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข'
+    : '<i class="fa-solid fa-floppy-disk"></i> บันทึกประวัติการแข่ง';
+}
+
+function setMatchFormFromSnapshot(data, matchId = null){
+  editingMatchId = matchId;
+  const teamA = Array.isArray(data.teamA) ? data.teamA : [];
+  const teamB = Array.isArray(data.teamB) ? data.teamB : [];
+  const sub = data.sub || null;
+  lastDraw = {
+    teamA: teamA.map(p=>({id:p.id||p.name, name:p.name, photo:p.photo||'', overall:p.overall||0})),
+    teamB: teamB.map(p=>({id:p.id||p.name, name:p.name, photo:p.photo||'', overall:p.overall||0})),
+    sub: sub ? {id:sub.id||sub.name, name:sub.name, photo:sub.photo||'', overall:sub.overall||0} : null,
+    subSide: sub ? (sub.side || null) : null,
+    totalA: Number(data.totalA) || 0,
+    totalB: Number(data.totalB) || 0
+  };
+  document.getElementById('teamA-name').value = data.teamAName || 'ทีม A';
+  document.getElementById('teamB-name').value = data.teamBName || 'ทีม B';
+  document.getElementById('teamA-color').value = data.colorA || '#ef4444';
+  document.getElementById('teamB-color').value = data.colorB || '#3b82f6';
+  document.getElementById('score-teamA').value = data.scoreA ?? 0;
+  document.getElementById('score-teamB').value = data.scoreB ?? 0;
+  document.getElementById('match-date').value = data.date || new Date().toISOString().slice(0,10);
+  updateTeamColors();
+  renderDraw();
+  updateMatchSaveButtonLabel();
+}
+
 async function saveMatchResult(){
   if(!lastDraw){ toast('กรุณาสุ่มแบ่งทีมก่อน'); return; }
   const {teamA, teamB, totalA, totalB, sub, subSide} = lastDraw;
   const dateVal = document.getElementById('match-date').value || new Date().toISOString().slice(0,10);
-  await db.collection('matches').add({
+  const payload = {
     date: dateVal,
     teamAName: document.getElementById('teamA-name').value,
     teamBName: document.getElementById('teamB-name').value,
@@ -1044,10 +1318,19 @@ async function saveMatchResult(){
     teamA: teamA.map(p=>({name:p.name, overall:p.overall, photo:p.photo||''})),
     teamB: teamB.map(p=>({name:p.name, overall:p.overall, photo:p.photo||''})),
     totalA, totalB,
-    sub: sub ? {name:sub.name, overall:sub.overall, side:subSide} : null,
+    sub: sub ? {name:sub.name, overall:sub.overall, side:subSide, photo:sub.photo||''} : null,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  toast('บันทึกประวัติการแข่งขันแล้ว ⚽');
+  };
+  if(editingMatchId){
+    await db.collection('matches').doc(editingMatchId).update(payload);
+    toast('อัปเดตประวัติการแข่งขันแล้ว ✅');
+  } else {
+    await db.collection('matches').add(payload);
+    toast('บันทึกประวัติการแข่งขันแล้ว ⚽');
+  }
+  editingMatchId = null;
+  updateMatchSaveButtonLabel();
+  renderHistory();
 }
 
 /* ---------- History ---------- */
@@ -1078,7 +1361,7 @@ function renderHistory(){
               <span class="text-slate-500"> - </span>
               <span style="color:${m.colorB}">${m.scoreB ?? 0} ${escapeHtml(m.teamBName||'ทีม B')}</span>
             </div>
-            ${isAdmin ? `<button data-delmatch="${doc.id}" class="text-red-400 hover:text-red-300 text-xs"><i class="fa-solid fa-trash"></i></button>` : ''}
+            ${isAdmin ? `<div class="flex items-center gap-2"><button data-editmatch="${doc.id}" class="text-amber-300 hover:text-amber-200 text-xs"><i class="fa-solid fa-pen"></i></button><button data-delmatch="${doc.id}" class="text-red-400 hover:text-red-300 text-xs"><i class="fa-solid fa-trash"></i></button></div>` : ''}
           </div>
         </div>
         <div id="hist-body-${doc.id}" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-700">
@@ -1097,6 +1380,14 @@ function renderHistory(){
         if(e.target.closest('[data-delmatch]')) return;
         document.getElementById('hist-body-'+doc.id).classList.toggle('hidden');
       });
+      const editBtn = item.querySelector('[data-editmatch]');
+      if(editBtn){
+        editBtn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          switchTab('matchmaker');
+          setMatchFormFromSnapshot(m, doc.id);
+        });
+      }
       const delBtn = item.querySelector('[data-delmatch]');
       if(delBtn){
         delBtn.addEventListener('click', async (e)=>{
